@@ -1,0 +1,29 @@
+name: build-and-test
+
+on:
+  push:
+
+  pull_request:
+  
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore wh7r4bb17.SharedRuntimes.slnx
+
+      - name: Build
+        run: dotnet build wh7r4bb17.SharedRuntimes.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test wh7r4bb17.SharedRuntimes.slnx -c Release --no-build --verbosity normal
+
+      - name: Smoke test
+        run: dotnet run --project SmokeTest/SmokeTest.csproj -c Release

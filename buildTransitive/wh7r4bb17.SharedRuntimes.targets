@@ -1,0 +1,96 @@
+<Project>
+
+	<UsingTask
+		TaskName="wh7r4bb17.SharedRuntimes.Build.ResolveSharedRuntimeSets"
+		AssemblyFile="$(_BuildTaskAssembly)" />
+
+	<PropertyGroup>
+		<_BuildTaskAssembly>$(MSBuildThisFileDirectory)tools/wh7r4bb17.SharedRuntimes.Build.dll</_BuildTaskAssembly>
+		<_SourceTaskProject>$(MSBuildThisFileDirectory)../buildTasks/wh7r4bb17.SharedRuntimes.Build/wh7r4bb17.SharedRuntimes.Build.csproj</_SourceTaskProject>
+		<_CommonFiles>$(CompanySharedCommonFilesDirectory)</_CommonFiles>
+		<_CommonFiles Condition="'$(_CommonFiles)' == ''">$(CommonProgramW6432)</_CommonFiles>
+		<_CommonFiles Condition="'$(_CommonFiles)' == ''">$(CommonProgramFiles)</_CommonFiles>
+
+		<_DesignTime>false</_DesignTime>
+		<_DesignTime Condition="'$(DesignTimeBuild)' == 'true'">true</_DesignTime>
+	</PropertyGroup>
+
+	<Target Name="ResolveSharedRuntimeSets"
+			BeforeTargets="ResolveAssemblyReferences;GetAssemblyAttributes;CoreGenerateAssemblyInfo"
+			DependsOnTargets="ResolveProjectReferences;PrepareSharedRuntimeTask"
+			Condition="'$(UseCompanySharedRuntime)' == 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+
+		<Error Condition="'$(GenerateAssemblyInfo)' == 'false'"
+			   Text="wh7r4bb17.SharedRuntimes: GenerateAssemblyInfo muss aktiviert sein." />
+
+		<Error Condition="'$(PublishTrimmed)' == 'true' or '$(PublishAot)' == 'true' or '$(PublishReadyToRun)' == 'true'"
+			   Text="wh7r4bb17.SharedRuntimes: Trimming, NativeAOT und ReadyToRun werden nicht unterstützt." />
+
+		<wh7r4bb17.SharedRuntimes.Build.ResolveSharedRuntimeSets
+			Sets="@(CompanySharedRuntimeSet)"
+            ConsumerTargetFramework="$(TargetFramework)"
+            CompanyName="$(CompanySharedCompanyName)"
+			References="@(CompanySharedReference)"
+			RuntimeDirectory="$(CompanySharedRuntimeDirectory)"
+			CommonFiles="$(_CommonFiles)"
+			DesignTime="$(_DesignTime)">
+
+			<Output TaskParameter="ResolvedReferences" ItemName="_References" />
+			<Output TaskParameter="Metadata" ItemName="_Metadata" />
+			<Output TaskParameter="ExcludeGlobs" ItemName="_ExcludeGlobs" />
+		</wh7r4bb17.SharedRuntimes.Build.ResolveSharedRuntimeSets>
+
+		<ItemGroup>
+			<Reference Include="@(_References)" />
+			<AssemblyMetadata Include="@(_Metadata)" />
+		</ItemGroup>
+
+	</Target>
+
+	<Target Name="ExcludeSharedRuntimeCopyLocal"
+			AfterTargets="ResolveAssemblyReferences"
+			DependsOnTargets="ResolveSharedRuntimeSets"
+			Condition="'$(UseCompanySharedRuntime)' == 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+
+		<ItemGroup>
+			<ReferenceCopyLocalPaths Remove="@(_ExcludeGlobs)" />
+		</ItemGroup>
+
+	</Target>
+
+	<Target Name="ExcludeSharedRuntimePublish"
+			AfterTargets="ComputeFilesToPublish"
+			DependsOnTargets="ResolveSharedRuntimeSets"
+			Condition="'$(UseCompanySharedRuntime)' == 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+
+		<ItemGroup>
+			<ResolvedFileToPublish Remove="@(_ExcludeGlobs)" />
+		</ItemGroup>
+
+	</Target>
+
+
+	<!-- Repository imports stage immutable task copies. Installed packages use tools/. -->
+	<Target Name="PrepareSharedRuntimeTask" Condition="Exists('$(_SourceTaskProject)')">
+		<MSBuild Projects="$(_SourceTaskProject)" Targets="Build"
+                 RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;PlatformTarget"
+                 Properties="Configuration=$(Configuration);GeneratePackageOnBuild=false" />
+		
+		<MSBuild Projects="$(_SourceTaskProject)" Targets="GetTargetPath"
+                 RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;PlatformTarget"
+                 Properties="Configuration=$(Configuration);GeneratePackageOnBuild=false">
+			<Output TaskParameter="TargetOutputs" ItemName="_SourceTaskOutput" />
+		</MSBuild>
+		<GetFileHash Files="@(_SourceTaskOutput)" Algorithm="SHA256">
+			<Output TaskParameter="Items" ItemName="_TaskHash" />
+		</GetFileHash>
+		<PropertyGroup>
+			<_TaskCache>$(MSBuildThisFileDirectory)../buildTasks/.task-cache/@(_TaskHash->'%(FileHash)')/</_TaskCache>
+			<_BuildTaskAssembly>$(_TaskCache)wh7r4bb17.SharedRuntimes.Build.dll</_BuildTaskAssembly>
+		</PropertyGroup>
+		<MakeDir Directories="$(_TaskCache)" />
+		<Copy SourceFiles="@(_SourceTaskOutput)" DestinationFolder="$(_TaskCache)"
+              SkipUnchangedFiles="true" Condition="!Exists('$(_BuildTaskAssembly)')" />
+	</Target>
+
+</Project>

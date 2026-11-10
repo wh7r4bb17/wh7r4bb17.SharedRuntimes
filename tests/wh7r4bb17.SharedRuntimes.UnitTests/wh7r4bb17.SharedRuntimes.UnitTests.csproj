@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<IsTestProject>true</IsTestProject>
+		<IsPackable>false</IsPackable>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<DoSigning>false</DoSigning>
+		<UseCompanySharedRuntime>false</UseCompanySharedRuntime>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.1" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Build.Framework" Version="17.14.28" PrivateAssets="all" />
+		<ProjectReference Include="../../src/wh7r4bb17.SharedRuntimes/wh7r4bb17.SharedRuntimes.csproj" />
+		<ProjectReference Include="..\..\buildTasks\wh7r4bb17.SharedRuntimes.Build\wh7r4bb17.SharedRuntimes.Build.csproj" />
+		<ProjectReference Include="../Fixtures/Original/Fixture.Original.csproj" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="../Fixtures/Conflict/Fixture.Conflict.csproj" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+	
+	<Target Name="CopyRuntimeTestFixtures" AfterTargets="Build" DependsOnTargets="ResolveProjectReferences">
+		<MSBuild Projects="../Fixtures/Original/Fixture.Original.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net10.0">
+			<Output TaskParameter="TargetOutputs" ItemName="_OriginalFixture" />
+		</MSBuild>
+		
+		<MSBuild Projects="../Fixtures/Conflict/Fixture.Conflict.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net10.0">
+			<Output TaskParameter="TargetOutputs" ItemName="_ConflictFixture" />
+		</MSBuild>
+		
+		<Copy SourceFiles="@(_OriginalFixture)" DestinationFolder="$(TargetDir)fixtures/original" />
+		<Copy SourceFiles="@(_ConflictFixture)" DestinationFolder="$(TargetDir)fixtures/conflict" />
+	</Target>
+	
+</Project>

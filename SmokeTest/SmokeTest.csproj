@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Aktiviert den SharedRuntime MSBuild-Mechanismus -->
+		<UseCompanySharedRuntime>true</UseCompanySharedRuntime>
+		<CompanySharedCompanyName>company</CompanySharedCompanyName>
+
+		<_SmokeCommonFiles>$(MSBuildProjectDirectory)\obj\MockCommonFiles\</_SmokeCommonFiles>
+		<_SmokeSetFolder>$(_SmokeCommonFiles)company\SmokeRuntime\1.0.0\net10.0\</_SmokeSetFolder>
+		<CompanySharedCommonFilesDirectory>$(_SmokeCommonFiles)</CompanySharedCommonFilesDirectory>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\wh7r4bb17.SharedRuntimes\wh7r4bb17.SharedRuntimes.csproj" />
+		<ProjectReference Include="..\tests\Fixtures\Original\Fixture.Original.csproj"
+						  ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<!-- Targets importieren -->
+	<Import Project="..\buildTransitive\wh7r4bb17.SharedRuntimes.targets" />
+
+	<!-- Nach dem Import, damit der Wert aus den Targets überschrieben wird. -->
+	<PropertyGroup>
+		<_SmokeTaskSource>$(MSBuildProjectDirectory)\..\buildTasks\wh7r4bb17.SharedRuntimes.Build\bin\$(Configuration)\netstandard2.0\wh7r4bb17.SharedRuntimes.Build.dll</_SmokeTaskSource>
+		<_SmokeTaskCopyDir>$(MSBuildProjectDirectory)\obj\MTTask\$([System.Guid]::NewGuid().ToString('N'))\</_SmokeTaskCopyDir>
+		<_BuildTaskAssembly>$(_SmokeTaskCopyDir)wh7r4bb17.SharedRuntimes.Build.dll</_BuildTaskAssembly>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<CompanySharedRuntimeSet Include="TestSet">
+			<RuntimeName>SmokeRuntime</RuntimeName>
+			<RuntimeVersion>1.0.0</RuntimeVersion>
+			<TargetFramework>net10.0</TargetFramework>
+		</CompanySharedRuntimeSet>
+
+		<CompanySharedReference Include="wh7r4bb17.SharedRuntimes.TestFixture" />
+
+		<!-- Gibt dem Programm den Mock-Pfad, weil InitializeFor sonst den echten Common-Files-Pfad nutzt. -->
+		<AssemblyMetadata Include="SmokeSetDirectory" Value="$(_SmokeSetFolder)" />
+	</ItemGroup>
+
+	<Target Name="StageSmokeFixture"
+			BeforeTargets="ResolveSharedRuntimeSets"
+			DependsOnTargets="ResolveProjectReferences">
+		<MSBuild Projects="..\tests\Fixtures\Original\Fixture.Original.csproj"
+				 Targets="GetTargetPath"
+				 Properties="Configuration=$(Configuration);TargetFramework=net10.0">
+			<Output TaskParameter="TargetOutputs" ItemName="_SmokeFixture" />
+		</MSBuild>
+
+		<MakeDir Directories="$(_SmokeSetFolder)" />
+		<Copy SourceFiles="@(_SmokeFixture)" DestinationFolder="$(_SmokeSetFolder)" SkipUnchangedFiles="true" />
+	</Target>
+
+	<Target Name="StageSmokeBuildTask"
+        BeforeTargets="ResolveSharedRuntimeSets"
+        DependsOnTargets="PrepareSharedRuntimeTask">
+		<MakeDir Directories="$(_SmokeTaskCopyDir)" />
+		<Copy SourceFiles="$(_SmokeTaskSource)" DestinationFolder="$(_SmokeTaskCopyDir)" />
+	</Target>
+
+</Project>

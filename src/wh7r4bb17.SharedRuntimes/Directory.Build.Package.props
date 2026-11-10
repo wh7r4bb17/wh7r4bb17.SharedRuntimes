@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+	<PropertyGroup>
+		<DoSigning>true</DoSigning>
+		<Cert>wh7r4bb17</Cert>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<OutputType>Library</OutputType>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Title>wh7r4bb17.SharedRuntimes</Title>
+		<Copyright>Copyright © wh7r4bb17 2026</Copyright>
+		<Company>wh7r4bb17</Company>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
+		<FileVersion>$(Version)</FileVersion>
+		<PackageId>wh7r4bb17.SharedRuntimes</PackageId>
+		<Description>Load centrally installed .NET assemblies and shared files at runtime without copying them into application output.</Description>
+		<RepositoryUrl>https://github.com/wh7r4bb17/wh7r4bb17.SharedRuntimes</RepositoryUrl>
+		<PackageReadmeFile>README.nuget.md</PackageReadmeFile>
+		<PackageOutputPath Condition="'$(Nuget)' != ''">$(Nuget)</PackageOutputPath>
+		<PackageOutputPath Condition="'$(Nuget)' == ''">$(MSBuildThisFileDirectory)../../artifacts/packages</PackageOutputPath>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<PackageVersion>$(Version)-beta</PackageVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<PackageVersion>$(Version)</PackageVersion>
+	</PropertyGroup>
+
+</Project>

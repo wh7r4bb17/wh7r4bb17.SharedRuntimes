@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/SmokeTest/">
+    <Project Path="SmokeTest/SmokeTest.csproj" Id="cfc0c4ac-aa15-493b-8650-567d72a41a6b" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/release.yml" />
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/wh7r4bb17.SharedRuntimes/wh7r4bb17.SharedRuntimes.csproj" />
+  </Folder>
+  <Folder Name="/buildTasks/">
+    <Project Path="buildTasks/wh7r4bb17.SharedRuntimes.Build/wh7r4bb17.SharedRuntimes.Build.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/wh7r4bb17.SharedRuntimes.UnitTests/wh7r4bb17.SharedRuntimes.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Fixtures/">
+    <Project Path="tests/Fixtures/Conflict/Fixture.Conflict.csproj" />
+    <Project Path="tests/Fixtures/Original/Fixture.Original.csproj" />
+  </Folder>
+</Solution>

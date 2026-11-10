@@ -1,0 +1,68 @@
+name: release-nuget
+
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore wh7r4bb17.SharedRuntimes.slnx
+
+      - name: Build
+        run: dotnet build wh7r4bb17.SharedRuntimes.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test wh7r4bb17.SharedRuntimes.slnx -c Release --no-build
+
+      - name: Determine package version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.release.tag_name }}'
+          $version = $tag -replace '^v', ''
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Pack
+        run: >
+          dotnet pack src/wh7r4bb17.SharedRuntimes/wh7r4bb17.SharedRuntimes.csproj
+          -c Release
+          --no-build
+          -p:PackageVersion=${{ steps.version.outputs.version }}
+          --output ./artifacts/packages
+
+      - name: Upload package to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release upload "${{ github.event.release.tag_name }}"
+          "./artifacts/packages/wh7r4bb17.SharedRuntimes.${{ steps.version.outputs.version }}.nupkg"
+          --clobber
+
+      - name: NuGet login (OIDC to temporary API key)
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Publish to NuGet.org
+        run: >
+          dotnet nuget push "./artifacts/packages/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          --skip-duplicate
